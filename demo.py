@@ -1,5 +1,5 @@
 import argparse
-import videoInfer
+from videoInfer import VideoInfer
 
 def parse_args():
 	parser = argparse.ArgumentParser(description='Video Inference Demo')
@@ -19,7 +19,7 @@ if __name__ == '__main__':
 
 	args = parse_args()
 	print('Called with argument:', args)
-	video_infer_handler = videoInfer(args)
+	video_infer_handler = VideoInfer(args)
 
 	if args.composite_video:
 		demo_video = video_infer_handler.composite_video(args.video_path, args.composite_video_name, args.display_score_thresh)

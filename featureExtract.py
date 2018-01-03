@@ -74,7 +74,7 @@ class FeatureExtraction(object):
             data_shape[0] = self.video.frame_group_len
             """
         for timestamps, frames in video: # frames are rgb channel-ordered
-            ext_process(frames)
+            features = self.ext_process(frames)
 
             yield timestamps, frames, features
 
