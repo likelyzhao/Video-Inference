@@ -5,6 +5,9 @@ from utils import center_crop_images
 import skimage
 
 
+
+
+
 class FeatureExtraction(object):
     """
     extract features for video frames.
@@ -39,6 +42,23 @@ class FeatureExtraction(object):
         transformer.set_channel_swap('data', (2, 1, 0))
         self.transformer = transformer
 
+    def ext_process(self,img_list):
+        import cv2
+        im_group = np.empty((self.batchsize, 3, self.height, self.width), dtype=np.float32)
+        for ix, img in enumerate(img_list):
+            img = cv2.resize(img, (225, 225))
+            img = img.astype(np.float32, copy=True)
+            img -= np.array([[[103.94, 116.78, 123.68]]])
+            img = img * 0.017
+            img = img.transpose((2, 0, 1))
+            im_group[ix] = img
+
+        self.net.blobs['data'].data[...] = im_group
+        out = self.net.forward()
+        feature = np.squeeze(out[self.featureLayer])
+        print np.shape(feature)
+        return feature
+
     def __call__(self, video):
         if video.frame_group_len != self.batchsize:
             raise IOError(
@@ -54,19 +74,7 @@ class FeatureExtraction(object):
             data_shape[0] = self.video.frame_group_len
             """
         for timestamps, frames in video: # frames are rgb channel-ordered
-            center_frames = center_crop_images(frames,(self.height, self.width))
-            #### TO DO: add other crop functions, corner crop, flip, etc.
-            im_group = np.empty((self.batchsize,3,self.height,self.width), dtype=np.float32)
-
-            for ix, img in enumerate(center_frames):
-                #### TO DO: preprocess multi images at once.
-                img = skimage.img_as_float(img).astype(np.float32)
-                img_preprocess = self.transformer.preprocess('data', img)
-                im_group[ix] = img_preprocess
-
-            self.net.blobs['data'].data[...] = im_group
-            self.net.forward()
-            features = self.net.blobs[self.featureLayer].data[...].reshape(self.batchsize, -1)
+            ext_process(frames)
 
             yield timestamps, frames, features
 

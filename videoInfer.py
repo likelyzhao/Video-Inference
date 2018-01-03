@@ -1,13 +1,32 @@
 import time
 from utils import Composite_Video
+from featureExtract import FeatureExtraction
+from featureCoding import FeatureCoding
+from postProcessing import PostProcessing
+from config import config
+from video import Video
 
 class VideoInfer(object):
-	def __init__(self, FeatureExtraction_obj, FeatureCoding_obj, PostProcessing_obj):
-		self.feature_extraction = FeatureExtraction_obj
-		self.feature_coding = FeatureCoding_obj
-		self.post_processing = PostProcessing_obj
+	def __init__(self, args):
 
-	def infer(self, video):
+		feature_extract = FeatureExtraction(modelPrototxt=config.FEATURE_EXTRACTION.MODEL_PROTOTXT,
+											modelFile=config.FEATURE_EXTRACTION.MODEL_FILE,
+											featureLayer=config.FEATURE_EXTRACTION.FEATURE_LAYER, gpu_id=args.gpu_id)
+		feature_coding = FeatureCoding(featureDim=config.FEATURE_CODING.FEATURE_DIM,
+		                               batchsize=args.frame_group,
+		                               modelPrefix=config.FEATURE_CODING.MODEL_PREFIX,
+										modelEpoch=config.FEATURE_CODING.MODEL_EPOCH,
+										synset=config.FEATURE_CODING.SYNSET, gpu_id=args.gpu_id)
+		post_processing = PostProcessing(score_thresh=args.display_score_thresh)
+
+		self.feature_extraction = feature_extract
+		self.feature_coding = feature_coding
+		self.post_processing = post_processing
+		self.step = args.step
+		self.frame_group = args.frame_group
+
+	def infer(self, video_path):
+		video = Video(video_path, step=self.step, frame_group_len=self.frame_group)
 		video_timestamps = []
 		video_classification_result = []
 		t1 = time.time()
