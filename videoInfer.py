@@ -23,10 +23,11 @@ class VideoInfer(object):
 		self.feature_coding = feature_coding
 		self.post_processing = post_processing
 		self.step = args.step
+		self.skip = args.skip
 		self.frame_group = args.frame_group
 
 	def infer(self, video_path):
-		video = Video(video_path, step=self.step, frame_group_len=self.frame_group)
+		video = Video(video_path, step=self.step, skip=self.skip, frame_group_len=self.frame_group)
 		video_timestamps = []
 		video_classification_result = []
 		t1 = time.time()
