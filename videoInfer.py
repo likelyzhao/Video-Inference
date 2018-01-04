@@ -36,7 +36,8 @@ class VideoInfer(object):
 			for label, prob in batch_classification_result.items():
 				print "{0}:{1:0.2f}%".format(label, prob * 100)
 			print "--" * 10
-			video_timestamps.append(batch_timestamps)
+                        import copy
+			video_timestamps.append(copy.deepcopy(batch_timestamps))
 			video_classification_result.append(batch_classification_result)
 			t1 = time.time()
 
