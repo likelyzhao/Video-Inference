@@ -5,7 +5,7 @@ def parse_args():
 	parser = argparse.ArgumentParser(description='Video Inference Demo')
 	parser.add_argument('--video_path', help='video to be classified', default='test.avi', type=str)
 	parser.add_argument('--step', help='Iterate frames every `step` seconds. Defaults to iterating every frame.', default=None, type=float)
-	parser.add_argument('--skip', help='', default=None, type=float)
+	parser.add_argument('--skip', help='', default=None, type=int)
 	parser.add_argument('--frame_group', help='number of frames to be grouped as one classification input', default=1, type=int)
 	parser.add_argument('--gpu_id', help='which gpu to use', default=0, type=int)
 	parser.add_argument('--composite_video', help='composite a new video with video inference result.', action='store_true')

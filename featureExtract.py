@@ -5,9 +5,6 @@ from utils import center_crop_images
 import skimage
 
 
-
-
-
 class FeatureExtraction(object):
     """
     extract features for video frames.
@@ -44,35 +41,39 @@ class FeatureExtraction(object):
 
     def ext_process(self,img_list):
         import cv2
-        im_group = np.empty((self.batchsize, 3, self.height, self.width), dtype=np.float32)
-        for ix, img in enumerate(img_list):
-            img = cv2.resize(img, (225, 225))
-            img = img.astype(np.float32, copy=True)
-            img -= np.array([[[103.94, 116.78, 123.68]]])
-            img = img * 0.017
-            img = img.transpose((2, 0, 1))
-            im_group[ix] = img
+        num_img = len(img_list)
+        num_batch = int(num_img / self.batchsize)
+        num_left = num_img % self.batchsize
+        batch_count = [self.batchsize for _ in range(num_batch)]
+        if num_left > 0:
+            batch_count.append(num_left)
 
-        self.net.blobs['data'].data[...] = im_group
-        out = self.net.forward()
-        feature = np.squeeze(out[self.featureLayer])
-        print np.shape(feature)
-        return feature
+        img_count = 0
+        im_group = np.empty((self.batchsize, 3, self.height, self.width), dtype=np.float32)
+        is_first_batch = True
+        for batch_num in batch_count:
+            for ix in range(batch_num):
+                img = img_list[img_count + ix]
+                img = cv2.resize(img, (225, 225))
+                img = img.astype(np.float32, copy=True)
+                img -= np.array([[[103.94, 116.78, 123.68]]])
+                img = img * 0.017
+                img = img.transpose((2, 0, 1))
+                im_group[ix] = img
+            self.net.blobs['data'].data[...] = im_group
+            out = self.net.forward()
+            feature = np.squeeze(out[self.featureLayer])
+            if is_first_batch:
+                all_feature = feature[:batch_num, :]
+                is_first_batch = False
+            else:
+                all_feature = np.vstack((all_feature, feature[:batch_num, :]))
+            img_count += batch_num
+
+        print np.shape(all_feature)
+        return all_feature
 
     def __call__(self, video):
-        if video.frame_group_len != self.batchsize:
-            raise IOError(
-                    ("FeatureExtraction error: video frame group len (%d) is not equal to prototxt batchsize (%d)"
-                     % (self.video.frame_group_len, self.batchsize)))
-            """
-            warnings.warn(
-                "FeatureExtractionWarning: "
-                "video frame group len (%d) " % (self.video.frame_group_len) +
-                "is not equal to prototxt batchsize (%d)" % (data_shape[0]) +
-                "Change prototxt batchsize to video frame group len.",
-                UserWarning)
-            data_shape[0] = self.video.frame_group_len
-            """
         for timestamps, frames in video: # frames are rgb channel-ordered
             features = self.ext_process(frames)
 
