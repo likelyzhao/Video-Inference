@@ -69,7 +69,7 @@ def _cvsecs(time):
 
 
 class Video(object):
-	def __init__(self, filename, start=None, end=None, step=None,
+	def __init__(self, filename, start=None, end=None, step=None, skip=None,
 				 ffmpeg='ffmpeg', verbose=False, frame_group_len=1):
 		"""
 		Parameters
@@ -106,6 +106,7 @@ class Video(object):
 		self.start = 0. if start is None else start
 		self.end = self._duration if end is None else end
 		self.step = 1. / self._fps if step is None else step
+		self.skip = 1 if skip is None else skip
 		self.frame_group_len = frame_group_len
 
 		# TODO warning if step != N x 1/fps (where N is an integer)
@@ -378,6 +379,8 @@ class Video(object):
 							 leave=True, mininterval=1.,
 							 unit='frames', unit_scale=True)
 
+		skip_count = 0
+
 		for t in generator:
 
 			rgb = self._get_frame(t)
@@ -387,6 +390,12 @@ class Video(object):
 			timestamps.append(t)
 			if len(frames) < self.frame_group_len:
 				continue
+
+			if skip_count > 1:
+				skip_count = skip_count - 1
+				continue
+
+			skip_count = self.skip
 
 			f_ = frames
 
